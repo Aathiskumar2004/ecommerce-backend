@@ -5,6 +5,9 @@ import adminMiddleware from "../middleware/adminMiddleware.js";
 
 const router = express.Router();
 
+// ========================================
+// PUBLIC ROUTE — ANYONE CAN VIEW PRODUCTS
+// ========================================
 router.get("/products", async (req, res) => {
   try {
     const products = await Product.find();
@@ -14,12 +17,31 @@ router.get("/products", async (req, res) => {
   }
 });
 
-// ===============================
-// ADMIN PROTECTED ROUTES
-// ===============================
+// ====================================================
+// ADMIN ONLY ROUTES  (Protected after this middleware)
+// ====================================================
 router.use(authMiddleware, adminMiddleware);
 
+// ========================================
+// GET PRODUCT BY ID  (ADMIN ONLY)
+// ========================================
+router.get("/product/:id", async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    res.json(product);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// ========================================
 // ADD PRODUCT
+// ========================================
 router.post("/product", async (req, res) => {
   try {
     const { name, brand, price, image } = req.body;
@@ -39,7 +61,9 @@ router.post("/product", async (req, res) => {
   }
 });
 
+// ========================================
 // UPDATE PRODUCT
+// ========================================
 router.put("/product/:id", async (req, res) => {
   try {
     const updated = await Product.findByIdAndUpdate(
@@ -61,7 +85,9 @@ router.put("/product/:id", async (req, res) => {
   }
 });
 
+// ========================================
 // DELETE PRODUCT
+// ========================================
 router.delete("/product/:id", async (req, res) => {
   try {
     const deleted = await Product.findByIdAndDelete(req.params.id);
@@ -71,7 +97,6 @@ router.delete("/product/:id", async (req, res) => {
     }
 
     res.json({ message: "Product deleted successfully" });
-
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
