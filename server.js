@@ -6,6 +6,8 @@ import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import authRoutes from "./routers/authRoutes.js";
 import adminRouter from "./routers/adminRoutes.js";
+import cartRoutes from "./routers/cartRoutes.js";
+
 
 
 
@@ -31,7 +33,7 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use("/api/auth", authRoutes);
 app.use("/api", adminRouter);
-
+app.use("/api/cart", cartRoutes);
 
 mongoose
   .connect(process.env.MONGO_URI)
