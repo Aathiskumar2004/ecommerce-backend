@@ -1,25 +1,18 @@
-import mongoose from "mongoose";
-
-const cartSchema = new mongoose.Schema({
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-    required: true,
+const userSchema = new mongoose.Schema({
+  name: String,
+  email: String,
+  password: String,
+  role: {
+    type: String,
+    default: "user"
   },
-  items: [
-    {
-      productId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Product",
-        required: true,
-      },
-      quantity: {
-        type: Number,
-        required: true,
-        default: 1,
-      }
-    }
-  ],
-}, { timestamps: true });
 
-export default mongoose.model("Cart", cartSchema);
+  // 🔥 Each user has their OWN cart
+  cart: [
+    {
+      productId: mongoose.Schema.Types.ObjectId,
+      size: String,
+      quantity: Number
+    }
+  ]
+});

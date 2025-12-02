@@ -1,87 +1,47 @@
 import express from "express";
+import User from "../models/User.js";
 import authMiddleware from "../middleware/authMiddleware.js";
-import Cart from "../models/Cart.js";
 
 const router = express.Router();
 
-// ➕ Add to Cart
+// 🔥 Get logged-in user's cart
+router.get("/my-cart", authMiddleware, async (req, res) => {
+  const user = await User.findById(req.user.id).populate("cart.productId");
+  res.json(user.cart);
+});
+
+// 🔥 Add to cart
 router.post("/add", authMiddleware, async (req, res) => {
-  const userId = req.user.id;
-  const { productId, quantity } = req.body;
+  const { productId, size, quantity } = req.body;
 
-  try {
-    let cart = await Cart.findOne({ userId });
+  const user = await User.findById(req.user.id);
 
-    if (!cart) {
-      cart = new Cart({
-        userId,
-        items: [{ productId, quantity }],
-      });
-    } else {
-      const index = cart.items.findIndex(
-        (item) => item.productId.toString() === productId
-      );
+  const existing = user.cart.find(
+    (p) => p.productId.toString() === productId && p.size === size
+  );
 
-      if (index >= 0) {
-        cart.items[index].quantity += quantity;
-      } else {
-        cart.items.push({ productId, quantity });
-      }
-    }
-
-    await cart.save();
-    res.json({ message: "Added to cart", cart });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+  if (existing) {
+    existing.quantity += quantity;
+  } else {
+    user.cart.push({ productId, size, quantity });
   }
+
+  await user.save();
+  res.json({ message: "Added to cart", cart: user.cart });
 });
 
-// 🛒 Get Cart
-router.get("/", authMiddleware, async (req, res) => {
-  try {
-    const cart = await Cart.findOne({ userId: req.user.id })
-      .populate("items.productId");
+// 🔥 Remove from cart
+router.delete("/remove/:productId/:size", authMiddleware, async (req, res) => {
+  const { productId, size } = req.params;
 
-    res.json(cart);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
+  const user = await User.findById(req.user.id);
 
-// ✏️ Update quantity
-router.put("/update", authMiddleware, async (req, res) => {
-  const { productId, quantity } = req.body;
+  user.cart = user.cart.filter(
+    (item) => !(item.productId.toString() === productId && item.size === size)
+  );
 
-  try {
-    const cart = await Cart.findOne({ userId: req.user.id });
-
-    const item = cart.items.find(
-      (i) => i.productId.toString() === productId
-    );
-
-    if (item) item.quantity = quantity;
-
-    await cart.save();
-    res.json(cart);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
-// ❌ Remove item
-router.delete("/remove/:id", authMiddleware, async (req, res) => {
-  try {
-    const cart = await Cart.findOne({ userId: req.user.id });
-
-    cart.items = cart.items.filter(
-      (i) => i.productId.toString() !== req.params.id
-    );
-
-    await cart.save();
-    res.json({ message: "Item removed", cart });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  await user.save();
+  res.json({ message: "Removed", cart: user.cart });
 });
 
 export default router;
