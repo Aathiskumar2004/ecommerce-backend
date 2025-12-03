@@ -1,63 +1,53 @@
-import express from "express";
-import mongoose from "mongoose";
-import dotenv from "dotenv";
-import cors from "cors";
-import helmet from "helmet";
-import rateLimit from "express-rate-limit";
-import authRoutes from "./routers/authRoutes.js";
-import adminRouter from "./routers/adminRoutes.js";
-import cartRoutes from "./routers/cartRoutes.js";
-
-dotenv.config();
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const connectDB = require('./config/db');
+const authRoutes = require('./routes/authRoutes');
+const productRoutes = require('./routes/productRoutes');
+const cartRoutes = require('./routes/cartRoutes');
 
 const app = express();
 
-app.set("trust proxy", 1);
+// -------------------- CORS FIX --------------------
+const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || 'http://localhost:5173';
 
-// Rate Limit
-app.use(
-  rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 100,
-    message: "Too many requests, try again later",
-  })
-);
+const corsOptions = {
+  origin: FRONTEND_ORIGIN,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+};
 
-// ⭐ FIXED CORS FOR FRONTEND + RENDER
-app.use(
-  cors({
-    origin: ["http://localhost:5173"],   // your LOCAL frontend
-    credentials: true,                   // allow cookies
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  })
-);
+app.use(cors(corsOptions));
+// Handle preflight requests
+app.options('*', cors(corsOptions));
 
-// ⭐ Allow cookies to pass through
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Credentials", "true");
-  next();
+// -------------------- Middleware --------------------
+app.use(express.json());
+app.use(helmet());
+app.use(rateLimit({
+  windowMs: 15 * 60 * 1000, 
+  max: 100 
+}));
+
+// -------------------- DB Connection --------------------
+connectDB();
+
+// -------------------- Routes --------------------
+app.use('/api/auth', authRoutes);
+app.use('/api/products', productRoutes);
+app.use('/api/cart', cartRoutes);
+
+// -------------------- Error Handling --------------------
+app.use((err, req, res, next) => {
+  console.error("Server Error:", err);
+  res.status(500).json({ error: 'Internal Server Error' });
 });
 
-// IMPORTANT: Helmet must not override CORS
-app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" }));
-
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-// Routes
-app.use("/api/auth", authRoutes);
-app.use("/api", adminRouter);
-app.use("/api/cart", cartRoutes);
-
-// MongoDB connection
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => console.log("MongoDB connected"))
-  .catch((err) => console.log(err));
-
+// -------------------- Start Server --------------------
 const PORT = process.env.PORT || 5000;
-
-app.listen(PORT, () =>
-  console.log(`🚀 Server running on http://localhost:${PORT}`)
-);
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
