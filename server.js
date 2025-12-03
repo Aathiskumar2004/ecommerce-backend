@@ -1,12 +1,14 @@
-require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
-const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
-const connectDB = require('./config/db');
-const authRoutes = require('./routes/authRoutes');
-const productRoutes = require('./routes/productRoutes');
-const cartRoutes = require('./routes/cartRoutes');
+import dotenv from 'dotenv';
+import express from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
+import connectDB from './config/db.js';
+import authRoutes from './routes/authRoutes.js';
+import productRoutes from './routes/productRoutes.js';
+import cartRoutes from './routes/cartRoutes.js';
+
+dotenv.config();
 
 const app = express();
 
@@ -21,32 +23,33 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-// Handle preflight requests
-app.options('*', cors(corsOptions));
+app.options('*', cors(corsOptions)); // Preflight support
 
-// -------------------- Middleware --------------------
+// Middleware
 app.use(express.json());
 app.use(helmet());
-app.use(rateLimit({
-  windowMs: 15 * 60 * 1000, 
-  max: 100 
-}));
+app.use(
+  rateLimit({
+    windowMs: 15 * 60 * 1000, 
+    max: 100,
+  })
+);
 
-// -------------------- DB Connection --------------------
+// DB Connect
 connectDB();
 
-// -------------------- Routes --------------------
+// Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/cart', cartRoutes);
 
-// -------------------- Error Handling --------------------
+// Error handler
 app.use((err, req, res, next) => {
-  console.error("Server Error:", err);
+  console.error('Server Error:', err);
   res.status(500).json({ error: 'Internal Server Error' });
 });
 
-// -------------------- Start Server --------------------
+// Server Listen
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
