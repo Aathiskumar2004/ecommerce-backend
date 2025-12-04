@@ -4,9 +4,9 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import connectDB from './config/db.js';
-import authRoutes from './routes/authRoutes.js';
-import productRoutes from './routes/productRoutes.js';
-import cartRoutes from './routes/cartRoutes.js';
+import authRoutes from './routers/authRoutes.js';
+import productRoutes from './routers/productRoutes.js';
+import cartRoutes from './routers/cartRoutes.js';
 
 dotenv.config();
 
@@ -22,15 +22,14 @@ const corsOptions = {
   allowedHeaders: ['Content-Type', 'Authorization']
 };
 
-app.use(cors(corsOptions));
-app.options('*', cors(corsOptions)); // Preflight support
+app.use(cors(corsOptions));  // This already handles preflight requests
 
 // Middleware
 app.use(express.json());
 app.use(helmet());
 app.use(
   rateLimit({
-    windowMs: 15 * 60 * 1000, 
+    windowMs: 15 * 60 * 1000,
     max: 100,
   })
 );
