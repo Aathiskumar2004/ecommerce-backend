@@ -13,14 +13,29 @@ dotenv.config();
 const app = express();
 
 // ✅ FIXED CORS (credentials support)
+const allowedOrigins = [
+  "https://ecommerce-frontend-ebon-delta.vercel.app",
+  "http://localhost:5173"
+];
+
 app.use(
   cors({
-    origin: "https://ecommerce-frontend-ebon-delta.vercel.app",
+    origin: function (origin, callback) {
+      // allow Postman / server-side requests
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
+
 
 // ---------------- Middleware ----------------
 app.use(express.json());
