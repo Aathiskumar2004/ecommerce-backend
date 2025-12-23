@@ -12,8 +12,15 @@ dotenv.config();
 
 const app = express();
 
-// SIMPLE CORS FIX (THIS ALONE IS ENOUGH)
-app.use(cors());
+// ✅ FIXED CORS (credentials support)
+app.use(
+  cors({
+    origin: "https://ecommerce-frontend-ebon-delta.vercel.app",
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 
 // ---------------- Middleware ----------------
 app.use(express.json());
@@ -36,8 +43,8 @@ app.use("/api/cart", cartRoutes);
 
 // ---------------- Error Handler ----------------
 app.use((err, req, res, next) => {
-  console.error("Server Error:", err);
-  res.status(500).json({ error: "Internal Server Error" });
+  console.error("Server Error:", err.message);
+  res.status(500).json({ error: err.message || "Internal Server Error" });
 });
 
 // ---------------- Server ----------------
