@@ -4,15 +4,28 @@ const userSchema = new mongoose.Schema({
   password: String,
   role: {
     type: String,
-    default: "user"
+    default: "user",
   },
 
-  // 🔥 Each user has their OWN cart
-  cart: [
-    {
-      productId: mongoose.Schema.Types.ObjectId,
-      size: String,
-      quantity: Number
-    }
-  ]
+  cart: {
+    type: [
+      {
+        productId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Product",
+          required: true,
+        },
+        size: {
+          type: String,
+          required: true,
+        },
+        quantity: {
+          type: Number,
+          required: true,
+          default: 1,
+        },
+      },
+    ],
+    default: [],   // 🔥 THIS IS THE MAIN FIX
+  },
 });

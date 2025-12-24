@@ -4,17 +4,16 @@ import authMiddleware from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// ✅ Get logged-in user's cart
+// 🔹 Get logged-in user's cart
 router.get("/my-cart", authMiddleware, async (req, res) => {
   try {
-    if (!req.user || !req.user.id) {
-      return res.status(401).json({ message: "Not authenticated" });
-    }
-
     const user = await User.findById(req.user.id).populate("cart.productId");
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
+
+    // safety (just in case)
+    if (!user.cart) user.cart = [];
 
     res.json(user.cart);
   } catch (error) {
@@ -23,7 +22,7 @@ router.get("/my-cart", authMiddleware, async (req, res) => {
   }
 });
 
-// ✅ Add to cart
+// 🔹 Add to cart
 router.post("/add", authMiddleware, async (req, res) => {
   try {
     const { productId, size, quantity } = req.body;
@@ -32,19 +31,18 @@ router.post("/add", authMiddleware, async (req, res) => {
       return res.status(400).json({ message: "Missing cart data" });
     }
 
-    if (!req.user || !req.user.id) {
-      return res.status(401).json({ message: "Not authenticated" });
-    }
-
     const user = await User.findById(req.user.id);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
+    // safety
+    if (!user.cart) user.cart = [];
+
     const existing = user.cart.find(
-      (p) =>
-        p.productId.toString() === productId &&
-        p.size === size
+      (item) =>
+        item.productId.toString() === productId &&
+        item.size === size
     );
 
     if (existing) {
@@ -65,19 +63,17 @@ router.post("/add", authMiddleware, async (req, res) => {
   }
 });
 
-// ✅ Remove from cart
+// 🔹 Remove from cart
 router.delete("/remove/:productId/:size", authMiddleware, async (req, res) => {
   try {
     const { productId, size } = req.params;
-
-    if (!req.user || !req.user.id) {
-      return res.status(401).json({ message: "Not authenticated" });
-    }
 
     const user = await User.findById(req.user.id);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
+
+    if (!user.cart) user.cart = [];
 
     user.cart = user.cart.filter(
       (item) =>
@@ -88,7 +84,7 @@ router.delete("/remove/:productId/:size", authMiddleware, async (req, res) => {
     );
 
     await user.save();
-    res.json({ message: "Removed", cart: user.cart });
+    res.json({ message: "Removed from cart", cart: user.cart });
   } catch (error) {
     console.error("Remove cart error:", error);
     res.status(500).json({ message: "Server error" });
