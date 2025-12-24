@@ -3,8 +3,8 @@ import jwt from "jsonwebtoken";
 const protect = (req, res, next) => {
   try {
     const token =
-      req.cookies?.token ||               // from cookie
-      req.headers.authorization?.split(" ")[1]; // from header
+      req.cookies?.token ||
+      req.headers.authorization?.split(" ")[1];
 
     if (!token) {
       return res.status(401).json({ message: "No token provided" });
@@ -12,13 +12,16 @@ const protect = (req, res, next) => {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // IMPORTANT: ensure req.user.id exists
-    req.user = { id: decoded.id || decoded._id };
+    // 🔥 STRICT check – id MUST exist
+    if (!decoded || !decoded.id) {
+      return res.status(401).json({ message: "Invalid token payload" });
+    }
 
-    next();
+    req.user = { id: decoded.id };
+    return next(); // 🔥 important
   } catch (error) {
     console.error("Auth middleware error:", error.message);
-    res.status(401).json({ message: "Invalid token" });
+    return res.status(401).json({ message: "Auth failed" });
   }
 };
 

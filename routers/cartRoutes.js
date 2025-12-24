@@ -4,7 +4,10 @@ import authMiddleware from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-
+/* ================================
+   GET CART
+   GET /api/cart/my-cart
+================================ */
 router.get("/my-cart", authMiddleware, async (req, res) => {
   try {
     if (!req.user || !req.user.id) {
@@ -20,16 +23,17 @@ router.get("/my-cart", authMiddleware, async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // safety
-    if (!user.cart) user.cart = [];
-
-    res.json(user.cart);
+    res.json(user.cart || []);
   } catch (error) {
     console.error("GET CART ERROR:", error);
     res.status(500).json({ message: "Server error" });
   }
 });
 
+/* ================================
+   ADD TO CART
+   POST /api/cart/add
+================================ */
 router.post("/add", authMiddleware, async (req, res) => {
   try {
     const { productId, size, quantity } = req.body;
@@ -45,14 +49,14 @@ router.post("/add", authMiddleware, async (req, res) => {
 
     if (!user.cart) user.cart = [];
 
-    const existingItem = user.cart.find(
+    const existing = user.cart.find(
       (item) =>
         item.productId.toString() === productId &&
         item.size === size
     );
 
-    if (existingItem) {
-      existingItem.quantity += Number(quantity);
+    if (existing) {
+      existing.quantity += Number(quantity);
     } else {
       user.cart.push({
         productId,
@@ -73,6 +77,10 @@ router.post("/add", authMiddleware, async (req, res) => {
   }
 });
 
+/* ================================
+   REMOVE FROM CART
+   DELETE /api/cart/remove/:productId/:size
+================================ */
 router.delete(
   "/remove/:productId/:size",
   authMiddleware,
@@ -84,8 +92,6 @@ router.delete(
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
-
-      if (!user.cart) user.cart = [];
 
       user.cart = user.cart.filter(
         (item) =>
