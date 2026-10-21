@@ -7,12 +7,14 @@ import connectDB from "./config/db.js";
 import authRoutes from "./routers/authRoutes.js";
 import productRoutes from "./routers/productRoutes.js";
 import cartRoutes from "./routers/cartRoutes.js";
+import cookieParser from "cookie-parser";
+
 
 dotenv.config();
 
 const app = express();
 
-// ✅ FIXED CORS (credentials support)
+
 const allowedOrigins = [
   "https://ecommerce-frontend-ebon-delta.vercel.app",
   "http://localhost:5173"
@@ -39,6 +41,7 @@ app.use(
 
 // ---------------- Middleware ----------------
 app.use(express.json());
+app.use(cookieParser());   
 app.use(helmet());
 
 app.use(
@@ -63,7 +66,7 @@ app.use((err, req, res, next) => {
 });
 
 // ---------------- Server ----------------
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 6000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });

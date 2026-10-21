@@ -14,13 +14,12 @@ router.get("/", async (req, res) => {
 });
 
 // Create product
-router.post("/", async (req, res) => {
+router.post("/bulk", async (req, res) => {
   try {
-    const product = new Product(req.body);
-    await product.save();
-    res.json(product);
+    const products = await Product.insertMany(req.body);
+    res.json(products);
   } catch (err) {
-    res.status(500).json({ error: "Failed to create product" });
+    res.status(500).json({ error: "Bulk insert failed" });
   }
 });
 
