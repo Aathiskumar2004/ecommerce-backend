@@ -1,10 +1,25 @@
-// ... existing imports ...
+import express from "express";
 import Order from "../models/Order.js";
-import Cart from "../models/Cart.js"; // 👈 Add Cart Model import
+import Cart from "../models/Cart.js";
 
+// 👉 INDHA LINE MISS AAGIRUKKU:
+const router = express.Router();
+
+/* =========================================
+   CREATE ORDER
+   POST /api/orders
+========================================= */
 router.post("/", async (req, res) => {
   try {
-    const { orderItems, shippingAddress, paymentMethod, totalPrice, userId, userName, userEmail } = req.body;
+    const { 
+      orderItems, 
+      shippingAddress, 
+      paymentMethod, 
+      totalPrice, 
+      userId, 
+      userName,
+      userEmail 
+    } = req.body;
 
     if (!orderItems || orderItems.length === 0) {
       return res.status(400).json({ message: "No items in cart" });
@@ -22,7 +37,7 @@ router.post("/", async (req, res) => {
 
     const savedOrder = await order.save();
 
-    // 🔥 User logged-in-ah irundha avanga Cart Table-la items-ai empty panrom:
+    // Clear cart table if logged in
     if (userId) {
       await Cart.findOneAndUpdate({ user: userId }, { items: [] });
     }
@@ -36,4 +51,21 @@ router.post("/", async (req, res) => {
     res.status(500).json({ message: "Failed to place order" });
   }
 });
+
+/* =========================================
+   GET ALL ORDERS (Admin)
+   GET /api/orders
+========================================= */
+router.get("/", async (req, res) => {
+  try {
+    const orders = await Order.find()
+      .populate("user", "name email")
+      .sort({ createdAt: -1 });
+
+    res.json(orders);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch orders" });
+  }
+});
+
 export default router;
