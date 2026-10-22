@@ -8,6 +8,7 @@ import authRoutes from "./routers/authRoutes.js";
 import productRoutes from "./routers/productRoutes.js";
 import cartRoutes from "./routers/cartRoutes.js";
 import cookieParser from "cookie-parser";
+import orderRoutes from "./routers/orderRoutes.js";
 
 
 dotenv.config();
@@ -58,6 +59,7 @@ connectDB();
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/cart", cartRoutes);
+app.use("/api/orders", orderRoutes);
 
 // ---------------- Error Handler ----------------
 app.use((err, req, res, next) => {
