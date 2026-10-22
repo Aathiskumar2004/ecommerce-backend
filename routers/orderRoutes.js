@@ -5,20 +5,29 @@ import User from "../models/User.js";
 const router = express.Router();
 
 /* =========================================
-   1. CREATE NEW ORDER (Checkout)
-   POST /api/orders
+   CREATE ORDER (With User ID & Name)
 ========================================= */
 router.post("/", async (req, res) => {
   try {
-    const { orderItems, shippingAddress, paymentMethod, totalPrice, userId } = req.body;
+    const { 
+      orderItems, 
+      shippingAddress, 
+      paymentMethod, 
+      totalPrice, 
+      userId, 
+      userName,
+      userEmail 
+    } = req.body;
 
     if (!orderItems || orderItems.length === 0) {
-      return res.status(400).json({ message: "No order items in cart" });
+      return res.status(400).json({ message: "No items in cart" });
     }
 
-    // Create Order in DB
+    // Create Order with User ID & Name
     const order = new Order({
-      user: userId || req.user?.id || null,
+      user: userId || null,
+      userName: userName || shippingAddress?.name || "Customer",
+      userEmail: userEmail || "",
       orderItems,
       shippingAddress,
       paymentMethod: paymentMethod || "cod",
@@ -27,9 +36,9 @@ router.post("/", async (req, res) => {
 
     const savedOrder = await order.save();
 
-    // Oruvela user logged-in-ah irundha avanga cart-ai DB-la empty panrom
-    if (userId || req.user?.id) {
-      await User.findByIdAndUpdate(userId || req.user.id, { cart: [] });
+    // User logged-in-ah irundha avanga backend cart-ai clear panrom
+    if (userId) {
+      await User.findByIdAndUpdate(userId, { cart: [] });
     }
 
     res.status(201).json({
@@ -43,39 +52,18 @@ router.post("/", async (req, res) => {
 });
 
 /* =========================================
-   2. GET ALL ORDERS (For Admin Panel)
-   GET /api/orders
+   GET ALL ORDERS (Admin-ku user details oda varum)
 ========================================= */
 router.get("/", async (req, res) => {
   try {
-    const orders = await Order.find().sort({ createdAt: -1 });
+    const orders = await Order.find()
+      .populate("user", "name email") // User details populate
+      .sort({ createdAt: -1 });
+
     res.json(orders);
   } catch (error) {
     console.error("GET ORDERS ERROR:", error);
     res.status(500).json({ message: "Failed to fetch orders" });
-  }
-});
-
-/* =========================================
-   3. UPDATE ORDER STATUS (For Admin)
-   PUT /api/orders/:id/status
-========================================= */
-router.put("/:id/status", async (req, res) => {
-  try {
-    const { status } = req.body;
-    const order = await Order.findByIdAndUpdate(
-      req.params.id,
-      { status },
-      { new: true }
-    );
-
-    if (!order) {
-      return res.status(404).json({ message: "Order not found" });
-    }
-
-    res.json({ message: "Order status updated", order });
-  } catch (error) {
-    res.status(500).json({ message: "Failed to update status" });
   }
 });
 

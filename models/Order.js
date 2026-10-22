@@ -2,10 +2,18 @@ import mongoose from "mongoose";
 
 const orderSchema = new mongoose.Schema(
   {
+    // User ObjectId
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: false, // Guest checkout-kum support panna
+      required: false,
+    },
+    // User Name (Direct display for Admin)
+    userName: {
+      type: String,
+    },
+    userEmail: {
+      type: String,
     },
     orderItems: [
       {
